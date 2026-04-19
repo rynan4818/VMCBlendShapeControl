@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using VMCBlendShapeControl.Configuration;
@@ -10,6 +11,7 @@ namespace VMCBlendShapeControl.Models
     public class VmcOscSender : IInitializable, IDisposable
     {
         private readonly object _lock = new object();
+        private static readonly bool IsDebugAssembly = DetermineIsDebugAssembly();
 
         private UdpClient _udpClient;
         private IPEndPoint _destination;
@@ -45,11 +47,13 @@ namespace VMCBlendShapeControl.Models
                 {
                     var valPacket = VmcOscMessageUtility.BuildMessage("/VMC/Ext/Blend/Val", blendShapeName, value);
                     _udpClient.Send(valPacket, valPacket.Length, _destination);
+                    LogDebugOscSend($"/VMC/Ext/Blend/Val {blendShapeName} {value:0.###}");
 
                     if (sendApply)
                     {
                         var applyPacket = VmcOscMessageUtility.BuildMessage("/VMC/Ext/Blend/Apply");
                         _udpClient.Send(applyPacket, applyPacket.Length, _destination);
+                        LogDebugOscSend("/VMC/Ext/Blend/Apply");
                     }
                 }
                 catch (Exception ex)
@@ -86,10 +90,12 @@ namespace VMCBlendShapeControl.Models
 
                         var valPacket = VmcOscMessageUtility.BuildMessage("/VMC/Ext/Blend/Val", kv.Key, kv.Value);
                         _udpClient.Send(valPacket, valPacket.Length, _destination);
+                        LogDebugOscSend($"/VMC/Ext/Blend/Val {kv.Key} {kv.Value:0.###}");
                     }
 
                     var applyPacket = VmcOscMessageUtility.BuildMessage("/VMC/Ext/Blend/Apply");
                     _udpClient.Send(applyPacket, applyPacket.Length, _destination);
+                    LogDebugOscSend("/VMC/Ext/Blend/Apply");
                 }
                 catch (Exception ex)
                 {
@@ -128,6 +134,27 @@ namespace VMCBlendShapeControl.Models
             _host = host;
             _port = port;
             _destination = new IPEndPoint(ipAddress, port);
+        }
+
+        private void LogDebugOscSend(string message)
+        {
+            if (!IsDebugAssembly)
+            {
+                return;
+            }
+
+            Plugin.Log.Debug($"[OSC SEND] {_host}:{_port} {message}");
+        }
+
+        private static bool DetermineIsDebugAssembly()
+        {
+            var attr = (DebuggableAttribute)Attribute.GetCustomAttribute(typeof(VmcOscSender).Assembly, typeof(DebuggableAttribute));
+            if (attr == null)
+            {
+                return false;
+            }
+
+            return attr.IsJITTrackingEnabled || attr.IsJITOptimizerDisabled;
         }
 
         public void Dispose()

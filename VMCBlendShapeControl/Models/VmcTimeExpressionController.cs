@@ -39,9 +39,9 @@ namespace VMCBlendShapeControl.Models
                 return;
             }
 
-            if (_data.ScriptSettings != null && _data.ScriptSettings.defaultFacialExpressionTransitionSpeed > 0f)
+            if (_data.ScriptSettings != null && _data.ScriptSettings.defaultFacialExpressionTransition > 0f)
             {
-                PluginConfig.Instance.defaultTransitionSpeed = _data.ScriptSettings.defaultFacialExpressionTransitionSpeed;
+                PluginConfig.Instance.defaultTransition = _data.ScriptSettings.defaultFacialExpressionTransition;
             }
 
             _data.ResetEventID();

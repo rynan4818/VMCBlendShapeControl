@@ -11,8 +11,10 @@ namespace VMCBlendShapeControl.Models
     {
         private readonly VmcBlendShapeCatalog _catalog;
         private readonly VmcOscReceiverParser _parser = new VmcOscReceiverParser();
+        private readonly object _stateLock = new object();
 
         private bool _disposed;
+        private bool _running;
         private UdpClient _udpClient;
         private Thread _thread;
 
@@ -23,7 +25,37 @@ namespace VMCBlendShapeControl.Models
 
         public void Initialize()
         {
-            if (!PluginConfig.Instance.enableBlendShapeDiscovery)
+            if (_disposed)
+            {
+                return;
+            }
+
+            SetEnabled(PluginConfig.Instance.enableOscReceiver);
+        }
+
+        public void SetEnabled(bool enabled)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            lock (_stateLock)
+            {
+                if (enabled)
+                {
+                    StartReceiver_NoLock();
+                }
+                else
+                {
+                    StopReceiver_NoLock();
+                }
+            }
+        }
+
+        private void StartReceiver_NoLock()
+        {
+            if (_running)
             {
                 return;
             }
@@ -37,6 +69,7 @@ namespace VMCBlendShapeControl.Models
                 }
 
                 _udpClient = new UdpClient(new IPEndPoint(IPAddress.Any, port));
+                _running = true;
                 _thread = new Thread(ReceiveLoop)
                 {
                     IsBackground = true,
@@ -47,8 +80,47 @@ namespace VMCBlendShapeControl.Models
             }
             catch (Exception ex)
             {
+                _running = false;
                 Plugin.Log.Warn($"Failed to start VMC receiver: {ex.Message}");
             }
+        }
+
+        private void StopReceiver_NoLock()
+        {
+            if (!_running)
+            {
+                return;
+            }
+
+            _running = false;
+            try
+            {
+                _udpClient?.Close();
+            }
+            catch
+            {
+            }
+            finally
+            {
+                _udpClient = null;
+            }
+
+            try
+            {
+                if (_thread != null && _thread.IsAlive)
+                {
+                    _thread.Join(150);
+                }
+            }
+            catch
+            {
+            }
+            finally
+            {
+                _thread = null;
+            }
+
+            Plugin.Log.Notice("VMC OSC receiver stopped");
         }
 
         private void ReceiveLoop()
@@ -58,7 +130,7 @@ namespace VMCBlendShapeControl.Models
             {
                 try
                 {
-                    if (_udpClient == null)
+                    if (!_running || _udpClient == null)
                     {
                         break;
                     }
@@ -79,7 +151,7 @@ namespace VMCBlendShapeControl.Models
                 }
                 catch (SocketException)
                 {
-                    if (_disposed)
+                    if (_disposed || !_running)
                     {
                         break;
                     }
@@ -113,13 +185,9 @@ namespace VMCBlendShapeControl.Models
         public void Dispose()
         {
             _disposed = true;
-            try
+            lock (_stateLock)
             {
-                _udpClient?.Close();
-                _udpClient = null;
-            }
-            catch
-            {
+                StopReceiver_NoLock();
             }
         }
     }

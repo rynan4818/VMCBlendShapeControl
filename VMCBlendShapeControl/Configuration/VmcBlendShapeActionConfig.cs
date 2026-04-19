@@ -4,11 +4,8 @@ namespace VMCBlendShapeControl.Configuration
     {
         public virtual string BlendShape { get; set; } = "";
         public virtual float Value { get; set; } = 1f;
-        public virtual float DurationSec { get; set; } = 0f;
-        public virtual float TransitionSpeed { get; set; } = -1f;
-        public virtual float BackToNeutralDelaySec { get; set; } = 0f;
-        public virtual bool NoBlink { get; set; } = false;
-        public virtual bool StopLipSync { get; set; } = false;
+        public virtual float Duration { get; set; } = 0.8f;
+        public virtual float Transition { get; set; } = 0.1f;
 
         public VmcBlendShapeActionConfig Clone()
         {
@@ -16,11 +13,8 @@ namespace VMCBlendShapeControl.Configuration
             {
                 BlendShape = BlendShape,
                 Value = Value,
-                DurationSec = DurationSec,
-                TransitionSpeed = TransitionSpeed,
-                BackToNeutralDelaySec = BackToNeutralDelaySec,
-                NoBlink = NoBlink,
-                StopLipSync = StopLipSync
+                Duration = Duration,
+                Transition = Transition
             };
         }
     }

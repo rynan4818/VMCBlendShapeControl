@@ -12,9 +12,7 @@ namespace VMCBlendShapeControl.Configuration
 
     public class VmcScriptSettings
     {
-        public float defaultFacialExpressionTransitionSpeed { get; set; } = 10f;
-        public List<string> blendShapesNoBlinkUser { get; set; } = new List<string>();
-        public List<string> noDefaultBlendShapeChangeKeys { get; set; } = new List<string>();
+        public float defaultFacialExpressionTransition { get; set; } = 0.1f;
     }
 
     public class VmcBlendShapeScriptJson
@@ -27,5 +25,25 @@ namespace VMCBlendShapeControl.Configuration
 
         [JsonProperty("Settings")]
         public VmcScriptSettings Settings { get; set; } = new VmcScriptSettings();
+    }
+
+    public class NalulunaAvatarEvent
+    {
+        public float _time { get; set; }
+        public float _duration { get; set; }
+        public string _key { get; set; } = string.Empty;
+        public string _value { get; set; } = string.Empty;
+    }
+
+    public class NalulunaAvatarEventSettings
+    {
+        public float defaultFacialExpressionTransitionSpeed { get; set; } = 10f;
+    }
+
+    public class NalulunaAvatarsEventsJson
+    {
+        public string _version { get; set; } = "0.0.1";
+        public List<NalulunaAvatarEvent> _events { get; set; } = new List<NalulunaAvatarEvent>();
+        public NalulunaAvatarEventSettings _settings { get; set; } = new NalulunaAvatarEventSettings();
     }
 }

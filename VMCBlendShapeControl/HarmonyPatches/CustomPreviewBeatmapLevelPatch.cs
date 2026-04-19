@@ -7,12 +7,20 @@ namespace VMCBlendShapeControl.HarmonyPatches
     internal class CustomPreviewBeatmapLevelPatch
     {
         public const string SongScriptFileName = "SongVMCBlendShape.json";
+        public const string NalulunaAvatarsEventsFileName = "NalulunaAvatarsEvents.json";
         public static string CustomLevelScriptPath = string.Empty;
 
         static void Postfix(CustomPreviewBeatmapLevel __instance)
         {
-            var scriptPath = Path.Combine(__instance.customLevelPath, SongScriptFileName);
-            CustomLevelScriptPath = File.Exists(scriptPath) ? scriptPath : string.Empty;
+            var songScriptPath = Path.Combine(__instance.customLevelPath, SongScriptFileName);
+            if (File.Exists(songScriptPath))
+            {
+                CustomLevelScriptPath = songScriptPath;
+                return;
+            }
+
+            var nalulunaScriptPath = Path.Combine(__instance.customLevelPath, NalulunaAvatarsEventsFileName);
+            CustomLevelScriptPath = File.Exists(nalulunaScriptPath) ? nalulunaScriptPath : string.Empty;
         }
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -11,9 +10,12 @@ namespace VMCBlendShapeControl.Models
     public class VmcExpressionTransitionEngine : IInitializable, IDisposable
     {
         private readonly VmcOscSender _sender;
-        private readonly BlockingCollection<VmcBlendShapeActionConfig> _actionQueue = new BlockingCollection<VmcBlendShapeActionConfig>();
+        private readonly object _pendingActionLock = new object();
+        private readonly AutoResetEvent _actionSignal = new AutoResetEvent(false);
         private readonly Dictionary<string, float> _currentValues = new Dictionary<string, float>(StringComparer.Ordinal);
 
+        private VmcBlendShapeActionConfig _latestAction;
+        private int _actionVersion;
         private bool _disposed;
         private Thread _worker;
 
@@ -39,21 +41,42 @@ namespace VMCBlendShapeControl.Models
                 return;
             }
 
-            _actionQueue.Add(action.Clone());
+            lock (_pendingActionLock)
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _latestAction = action.Clone();
+                Interlocked.Increment(ref _actionVersion);
+            }
+
+            _actionSignal.Set();
         }
 
         private void QueueWorker()
         {
             try
             {
-                foreach (var action in _actionQueue.GetConsumingEnumerable())
+                while (true)
                 {
+                    _actionSignal.WaitOne();
+
                     if (_disposed)
                     {
                         break;
                     }
 
-                    ProcessAction(action);
+                    while (TryDequeueLatest(out var action, out var actionVersion))
+                    {
+                        if (_disposed)
+                        {
+                            return;
+                        }
+
+                        ProcessAction(action, actionVersion);
+                    }
                 }
             }
             catch (Exception ex)
@@ -62,80 +85,149 @@ namespace VMCBlendShapeControl.Models
             }
         }
 
-        private void ProcessAction(VmcBlendShapeActionConfig action)
+        private bool TryDequeueLatest(out VmcBlendShapeActionConfig action, out int actionVersion)
         {
+            lock (_pendingActionLock)
+            {
+                if (_latestAction == null)
+                {
+                    action = null;
+                    actionVersion = 0;
+                    return false;
+                }
+
+                action = _latestAction;
+                actionVersion = _actionVersion;
+                _latestAction = null;
+                return true;
+            }
+        }
+
+        private void ProcessAction(VmcBlendShapeActionConfig action, int actionVersion)
+        {
+            if (IsCancelled(actionVersion))
+            {
+                return;
+            }
+
             var blendShape = action.BlendShape.Trim();
             var targetValue = Mathf.Clamp01(action.Value);
-            var speed = action.TransitionSpeed > 0f ? action.TransitionSpeed : PluginConfig.Instance.defaultTransitionSpeed;
+            var transitionSec = ResolveTransitionSec(action);
+            var duration = Math.Max(0f, action.Duration);
 
             var current = 0f;
             _currentValues.TryGetValue(blendShape, out current);
 
-            Transition(blendShape, current, targetValue, speed);
-            _currentValues[blendShape] = targetValue;
-
-            if (action.DurationSec > 0f)
+            if (duration > 0f)
             {
-                SleepMs(action.DurationSec);
-                Transition(blendShape, _currentValues[blendShape], 0f, speed);
-                _currentValues[blendShape] = 0f;
+                var effectiveTransition = Math.Min(transitionSec, duration / 2f);
+                var holdSec = Math.Max(0f, duration - (effectiveTransition * 2f));
+
+                var forward = Transition(blendShape, current, targetValue, effectiveTransition, actionVersion);
+                _currentValues[blendShape] = forward.LastValue;
+
+                if (forward.Cancelled)
+                {
+                    return;
+                }
+
+                if (holdSec > 0f && SleepMs(holdSec, actionVersion))
+                {
+                    return;
+                }
+
+                var backToZero = Transition(blendShape, _currentValues[blendShape], 0f, effectiveTransition, actionVersion);
+                _currentValues[blendShape] = backToZero.LastValue;
+
+                if (backToZero.Cancelled)
+                {
+                    return;
+                }
+
+                return;
             }
 
-            if (action.BackToNeutralDelaySec > 0f && !string.IsNullOrWhiteSpace(PluginConfig.Instance.defaultNeutralBlendShape))
-            {
-                SleepMs(action.BackToNeutralDelaySec);
-
-                var neutral = PluginConfig.Instance.defaultNeutralBlendShape.Trim();
-                var neutralTarget = Mathf.Clamp01(PluginConfig.Instance.defaultNeutralValue);
-                var neutralCurrent = 0f;
-                _currentValues.TryGetValue(neutral, out neutralCurrent);
-
-                Transition(neutral, neutralCurrent, neutralTarget, speed);
-                _currentValues[neutral] = neutralTarget;
-            }
+            var oneWay = Transition(blendShape, current, targetValue, transitionSec, actionVersion);
+            _currentValues[blendShape] = oneWay.LastValue;
         }
 
-        private void Transition(string blendShape, float from, float to, float speed)
+        private float ResolveTransitionSec(VmcBlendShapeActionConfig action)
         {
-            if (_disposed)
+            var transitionSec = action.Transition > 0f ? action.Transition : PluginConfig.Instance.defaultTransition;
+            return Math.Max(0f, transitionSec);
+        }
+
+        private TransitionResult Transition(string blendShape, float from, float to, float transitionSec, int actionVersion)
+        {
+            if (IsCancelled(actionVersion))
             {
-                return;
+                return TransitionResult.CreateCancelled(from);
             }
 
-            if (Mathf.Abs(from - to) < 0.0001f || speed <= 0f)
+            if (Mathf.Abs(from - to) < 0.0001f || transitionSec <= 0f)
             {
                 _sender.SendBlendValue(blendShape, to);
-                return;
+                return IsCancelled(actionVersion) ? TransitionResult.CreateCancelled(to) : TransitionResult.CreateCompleted(to);
             }
 
             var tickMs = Math.Max(4, PluginConfig.Instance.transitionTickMs);
-            var tickSec = tickMs / 1000f;
-            var transitionSec = 1.66f / Mathf.Max(0.01f, speed);
-            var steps = Math.Max(1, Mathf.CeilToInt(transitionSec / tickSec));
+            var totalMs = Math.Max(1, Mathf.RoundToInt(transitionSec * 1000f));
+            var steps = Math.Max(1, Mathf.CeilToInt(totalMs / (float)tickMs));
+            var lastValue = from;
 
             for (var i = 1; i <= steps; i++)
             {
-                if (_disposed)
+                if (IsCancelled(actionVersion))
                 {
-                    return;
+                    return TransitionResult.CreateCancelled(lastValue);
                 }
 
                 var t = i / (float)steps;
                 var value = Mathf.Lerp(from, to, t);
                 _sender.SendBlendValue(blendShape, value);
-                Thread.Sleep(tickMs);
+                lastValue = value;
+
+                if (InterruptibleSleepMs(tickMs, actionVersion))
+                {
+                    return TransitionResult.CreateCancelled(lastValue);
+                }
             }
+
+            return TransitionResult.CreateCompleted(lastValue);
         }
 
-        private static void SleepMs(float sec)
+        private bool SleepMs(float sec, int actionVersion)
         {
             if (sec <= 0f)
             {
-                return;
+                return IsCancelled(actionVersion);
             }
 
             var ms = Math.Max(1, Mathf.RoundToInt(sec * 1000f));
-            Thread.Sleep(ms);
+            return InterruptibleSleepMs(ms, actionVersion);
+        }
+
+        private bool InterruptibleSleepMs(int totalMs, int actionVersion)
+        {
+            var remaining = totalMs;
+            while (remaining > 0)
+            {
+                if (IsCancelled(actionVersion))
+                {
+                    return true;
+                }
+
+                var chunk = Math.Min(10, remaining);
+                Thread.Sleep(chunk);
+                remaining -= chunk;
+            }
+
+            return IsCancelled(actionVersion);
+        }
+
+        private bool IsCancelled(int actionVersion)
+        {
+            return _disposed || actionVersion != Volatile.Read(ref _actionVersion);
         }
 
         public void Dispose()
@@ -146,8 +238,44 @@ namespace VMCBlendShapeControl.Models
             }
 
             _disposed = true;
-            _actionQueue.CompleteAdding();
-            _actionQueue.Dispose();
+
+            lock (_pendingActionLock)
+            {
+                _latestAction = null;
+                Interlocked.Increment(ref _actionVersion);
+            }
+
+            _actionSignal.Set();
+
+            if (_worker != null && _worker.IsAlive && Thread.CurrentThread != _worker)
+            {
+                _worker.Join(500);
+            }
+
+            _actionSignal.Dispose();
+            _worker = null;
+        }
+
+        private readonly struct TransitionResult
+        {
+            public readonly float LastValue;
+            public readonly bool Cancelled;
+
+            private TransitionResult(float lastValue, bool cancelled)
+            {
+                LastValue = lastValue;
+                Cancelled = cancelled;
+            }
+
+            public static TransitionResult CreateCompleted(float value)
+            {
+                return new TransitionResult(value, false);
+            }
+
+            public static TransitionResult CreateCancelled(float value)
+            {
+                return new TransitionResult(value, true);
+            }
         }
     }
 }

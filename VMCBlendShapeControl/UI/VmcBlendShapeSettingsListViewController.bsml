@@ -3,6 +3,9 @@
     <horizontal pad-top="5" pad-bottom="10">
       <vertical>
         <horizontal pref-width="100">
+          <text text="Core" font-size="3.8" color="#66CCFF" preferred-width="95" />
+        </horizontal>
+        <horizontal pref-width="100">
           <toggle-setting text="Enable Time Based Expression" value="enableTimeBasedExpression" preferred-width="95" apply-on-change="true" />
         </horizontal>
         <horizontal pref-width="100">
@@ -10,6 +13,13 @@
         </horizontal>
         <horizontal pref-width="100">
           <toggle-setting text="Enable Event Based Expression" value="enableEventBasedExpression" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+
+        <horizontal pref-width="100" pad-top="2">
+          <text text="OSC" font-size="3.8" color="#66CCFF" preferred-width="95" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <toggle-setting text="Enable OSC Receiver (BlendShape detect)" value="enableOscReceiver" preferred-width="95" apply-on-change="true" />
         </horizontal>
         <horizontal pref-width="100">
           <string-setting text="VMC Host" value="vmcHost" preferred-width="95" apply-on-change="true" />
@@ -21,16 +31,22 @@
           <increment-setting text="VMC Listen Port" value="vmcListenPort" min="1" max="65535" increment="1" integer-only="true" preferred-width="95" apply-on-change="true" />
         </horizontal>
         <horizontal pref-width="100">
-          <toggle-setting text="Enable BlendShape Discovery" value="enableBlendShapeDiscovery" preferred-width="95" apply-on-change="true" />
+          <text text="~discoveredBlendShapeCount" font-size="3.5" preferred-width="68" />
+          <button text="Refresh" on-click="refresh-discovered" preferred-width="27" />
         </horizontal>
         <horizontal pref-width="100">
-          <increment-setting text="Default Transition Speed" value="defaultTransitionSpeed" min="0" max="100" increment="1" integer-only="false" preferred-width="95" apply-on-change="true" />
+          <text text="~discoveredBlendShapesPreview" font-size="3" font-color="#CCFFCC" preferred-width="95" />
+        </horizontal>
+
+        <horizontal pref-width="100" pad-top="2">
+          <text text="Default Action" font-size="3.8" color="#66CCFF" preferred-width="95" />
         </horizontal>
         <horizontal pref-width="100">
-          <string-setting text="Default Neutral BlendShape" value="defaultNeutralBlendShape" preferred-width="95" apply-on-change="true" />
+          <increment-setting text="Default Transition (sec)" value="defaultTransition" min="0" max="10" increment="0.01" integer-only="false" preferred-width="95" apply-on-change="true" />
         </horizontal>
-        <horizontal pref-width="100">
-          <increment-setting text="Default Neutral Value" value="defaultNeutralValue" min="0" max="1" increment="0.05" integer-only="false" preferred-width="95" apply-on-change="true" />
+
+        <horizontal pref-width="100" pad-top="2">
+          <text text="Event Enable" font-size="3.8" color="#66CCFF" preferred-width="95" />
         </horizontal>
         <horizontal pref-width="100">
           <toggle-setting text="Game Start Event" value="enableGameStartEvent" preferred-width="95" apply-on-change="true" />
@@ -45,10 +61,10 @@
           <toggle-setting text="Resume Event" value="enableResumeEvent" preferred-width="95" apply-on-change="true" />
         </horizontal>
         <horizontal pref-width="100">
-          <toggle-setting text="Combo Event" value="enableComboEvent" preferred-width="60" apply-on-change="true" />
+          <toggle-setting text="Combo Event" value="enableComboEvent" preferred-width="63" apply-on-change="true" />
         </horizontal>
         <horizontal pref-width="100">
-          <increment-setting text="Count" value="comboTriggerCount" min="1" max="1000" increment="1" integer-only="true" preferred-width="35" apply-on-change="true" />
+            <increment-setting text="Combo Count" value="comboTriggerCount" min="1" max="9999" increment="1" integer-only="true" preferred-width="32" apply-on-change="true" />
         </horizontal>
         <horizontal pref-width="100">
           <toggle-setting text="Combo Drop Event" value="enableComboDropEvent" preferred-width="95" apply-on-change="true" />
@@ -68,12 +84,42 @@
         <horizontal pref-width="100">
           <toggle-setting text="Full Combo Event" value="enableFullComboEvent" preferred-width="95" apply-on-change="true" />
         </horizontal>
-        <horizontal pref-width="100">
-          <text text="~discoveredBlendShapeCount" font-size="3.5" preferred-width="70" />
-          <button text="Refresh" on-click="refresh-discovered" preferred-width="25" />
+        <horizontal pref-width="100" pad-top="2">
+          <text text="Event Action Editor" font-size="3.8" color="#66CCFF" preferred-width="95" />
         </horizontal>
         <horizontal pref-width="100">
-          <text text="~discoveredBlendShapesPreview" font-size="3" font-color="#CCFFCC" preferred-width="95" />
+          <dropdown-list-setting id="event-action-preset-dropdown" text="Preset" value="selectedEventActionPreset" options="eventActionPresetOptions" size-delta-x="50" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <string-setting id="event-action-preset-name-setting" text="Preset Name" value="eventActionPresetName" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <button text="Save Preset" on-click="save-event-action-preset" preferred-width="46" />
+          <button text="Reload Presets" on-click="reload-event-action-presets" preferred-width="46" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <text text="~eventActionPresetStatus" font-size="3" font-color="#CCCCCC" preferred-width="95" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <dropdown-list-setting id="event-target-dropdown" text="Edit Target Event" value="selectedEventTarget" options="eventTargetOptions" size-delta-x="50" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <dropdown-list-setting id="event-blendshape-dropdown" text="BlendShape (dropdown)" value="eventActionBlendShape" options="eventBlendShapeOptions" size-delta-x="50" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <string-setting id="event-blendshape-manual-setting" text="BlendShape (manual)" value="eventActionBlendShapeManual" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <increment-setting id="event-action-value-setting" text="Value" value="eventActionValue" min="0" max="1" increment="0.05" integer-only="false" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <increment-setting id="event-action-duration-setting" text="Duration (sec)" value="eventActionDuration" min="0" max="30" increment="0.05" integer-only="false" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <increment-setting id="event-action-transition-setting" text="Transition (sec)" value="eventActionTransition" min="0" max="10" increment="0.01" integer-only="false" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <text text="~selectedEventActionSummary" font-size="3" font-color="#CCCCCC" preferred-width="95" />
         </horizontal>
       </vertical>
     </horizontal>
