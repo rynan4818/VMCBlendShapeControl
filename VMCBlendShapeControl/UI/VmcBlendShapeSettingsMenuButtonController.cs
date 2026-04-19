@@ -19,14 +19,14 @@ namespace VMCBlendShapeControl.UI
         public void Initialize()
         {
             _menuButton = new MenuButton("VMC BlendShape Control", "Configure VMC BlendShape Control settings.", ShowFlowCoordinator);
-            MenuButtons.instance?.RegisterButton(_menuButton);
+            MenuButtons.Instance?.RegisterButton(_menuButton);
         }
 
         public void Dispose()
         {
             if (_menuButton != null)
             {
-                MenuButtons.instance?.UnregisterButton(_menuButton);
+                MenuButtons.Instance?.UnregisterButton(_menuButton);
                 _menuButton = null;
             }
         }

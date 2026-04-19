@@ -714,12 +714,12 @@ namespace VMCBlendShapeControl.UI
 
         private void EnsureEventBlendShapeDropdownButtonHandler()
         {
-            if (eventBlendShapeDropdown?.dropdown == null)
+            if (eventBlendShapeDropdown?.Dropdown == null)
             {
                 return;
             }
 
-            var button = eventBlendShapeDropdown.dropdown.GetField<Button, DropdownWithTableView>("_button");
+            var button = eventBlendShapeDropdown.Dropdown.GetField<Button, DropdownWithTableView>("_button");
             if (button == null || ReferenceEquals(button, _eventBlendShapeDropdownButton))
             {
                 return;
@@ -1017,7 +1017,7 @@ namespace VMCBlendShapeControl.UI
                 return;
             }
 
-            dropdown.values = options;
+            dropdown.Values = options;
             dropdown.UpdateChoices();
             dropdown.ReceiveValue();
         }
