@@ -1,0 +1,81 @@
+<bg xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd">
+  <settings-container child-control-width="true" child-control-height="true" child-expand-width="true" child-expand-height="false">
+    <horizontal pad-top="5" pad-bottom="10">
+      <vertical>
+        <horizontal pref-width="100">
+          <toggle-setting text="Enable Time Based Expression" value="enableTimeBasedExpression" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <toggle-setting text="Use Song Specific Script" value="songSpecificScript" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <toggle-setting text="Enable Event Based Expression" value="enableEventBasedExpression" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <string-setting text="VMC Host" value="vmcHost" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <increment-setting text="VMC Send Port" value="vmcSendPort" min="1" max="65535" increment="1" integer-only="true" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <increment-setting text="VMC Listen Port" value="vmcListenPort" min="1" max="65535" increment="1" integer-only="true" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <toggle-setting text="Enable BlendShape Discovery" value="enableBlendShapeDiscovery" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <increment-setting text="Default Transition Speed" value="defaultTransitionSpeed" min="0" max="100" increment="1" integer-only="false" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <string-setting text="Default Neutral BlendShape" value="defaultNeutralBlendShape" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <increment-setting text="Default Neutral Value" value="defaultNeutralValue" min="0" max="1" increment="0.05" integer-only="false" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <toggle-setting text="Game Start Event" value="enableGameStartEvent" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <toggle-setting text="Game End Event" value="enableGameEndEvent" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <toggle-setting text="Pause Event" value="enablePauseEvent" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <toggle-setting text="Resume Event" value="enableResumeEvent" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <toggle-setting text="Combo Event" value="enableComboEvent" preferred-width="60" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <increment-setting text="Count" value="comboTriggerCount" min="1" max="1000" increment="1" integer-only="true" preferred-width="35" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <toggle-setting text="Combo Drop Event" value="enableComboDropEvent" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <toggle-setting text="Miss Event" value="enableMissEvent" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <toggle-setting text="Bomb Event" value="enableBombEvent" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <toggle-setting text="Clear Event" value="enableClearEvent" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <toggle-setting text="Fail Event" value="enableFailEvent" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <toggle-setting text="Full Combo Event" value="enableFullComboEvent" preferred-width="95" apply-on-change="true" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <text text="~discoveredBlendShapeCount" font-size="3.5" preferred-width="70" />
+          <button text="Refresh" on-click="refresh-discovered" preferred-width="25" />
+        </horizontal>
+        <horizontal pref-width="100">
+          <text text="~discoveredBlendShapesPreview" font-size="3" font-color="#CCFFCC" preferred-width="95" />
+        </horizontal>
+      </vertical>
+    </horizontal>
+  </settings-container>
+</bg>

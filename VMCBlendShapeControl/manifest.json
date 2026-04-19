@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/bsmg/BSIPA-MetadataFileSchema/master/Schema.json",
+  "id": "VMCBlendShapeControl",
+  "name": "VMCBlendShapeControl",
+  "author": "Rynan",
+  "version": "0.1.0",
+  "description": "Control VMC BlendShape expressions by song time and gameplay events.",
+  "gameVersion": "1.20.0",
+  "dependsOn": {
+    "BSIPA": "^4.2.0",
+    "SiraUtil": "^3.0.0",
+    "BeatSaberMarkupLanguage": "^1.6.2"
+  }
+}
