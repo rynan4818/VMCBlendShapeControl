@@ -25,9 +25,9 @@ namespace VMCBlendShapeControl.Models
         public void Initialize()
         {
             bool loaded;
-            if (PluginConfig.Instance.songSpecificScript && CustomPreviewBeatmapLevelPatch.CustomLevelScriptPath != string.Empty)
+            if (PluginConfig.Instance.songSpecificScript && SongTimeEventScriptBeatmapPatch.CustomLevelScriptPath != string.Empty)
             {
-                loaded = _data.LoadVmcExpressionData(CustomPreviewBeatmapLevelPatch.CustomLevelScriptPath);
+                loaded = _data.LoadVmcExpressionData(SongTimeEventScriptBeatmapPatch.CustomLevelScriptPath);
             }
             else
             {

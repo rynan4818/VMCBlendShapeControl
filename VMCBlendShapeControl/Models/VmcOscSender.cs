@@ -124,11 +124,18 @@ namespace VMCBlendShapeControl.Models
                 return;
             }
 
-            IPAddress ipAddress;
-            if (!IPAddress.TryParse(host, out ipAddress))
+            IPAddress ipAddress = IPAddress.Loopback;
+            try
             {
                 var addresses = Dns.GetHostAddresses(host);
-                ipAddress = addresses.Length > 0 ? addresses[0] : IPAddress.Loopback;
+                if (addresses.Length > 0)
+                {
+                    ipAddress = addresses[0];
+                }
+            }
+            catch (SocketException)
+            {
+                Plugin.Log.Warn($"Failed to resolve OSC host '{host}', fallback to loopback.");
             }
 
             _host = host;
